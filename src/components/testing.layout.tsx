@@ -1,58 +1,21 @@
-import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 
-// import icons
-import { sidebar_menus, logo, movies, series } from '../assets';
+// import components and custom hooks
+import CustomVideoPlayer from "./custom.video.player.tsx";
+import useContainer from "../_hooks/useContainer.ts";
+
 
 export default function TestingLayout() {
-    const [selected, setSelected] = useState({ type: 'sidebar', index: 0 }); // Sidebar or grid focus
-    const [content, setContent] = useState(movies); // Default to movies
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-        setSelected((prev) => {
-            const { type, index } = prev;
-            const gridItems = content.length; // Dynamic grid item count
-            const gridColumns = 4; // Number of columns in the grid
-
-            if (type === 'sidebar') {
-                if (event.key === 'ArrowDown') return { type: 'sidebar', index: Math.min(index + 1, 1) }; // Movies (0) and Series (1)
-                if (event.key === 'ArrowUp') return { type: 'sidebar', index: Math.max(index - 1, 0) };
-                if (event.key === 'ArrowRight') return { type: 'grid', index: 0 };
-            } else if (type === 'grid') {
-                if (event.key === 'ArrowLeft') {
-                    if (index % gridColumns === 0) return { type: 'sidebar', index: selected.index }; // Back to sidebar
-                    return { type: 'grid', index: Math.max(index - 1, 0) };
-                }
-                if (event.key === 'ArrowRight') return { type: 'grid', index: Math.min(index + 1, gridItems - 1) };
-                if (event.key === 'ArrowUp') {
-                    if (index < gridColumns) return prev; // Prevent moving up from the first row
-                    return { type: 'grid', index: index - gridColumns };
-                }
-                if (event.key === 'ArrowDown') {
-                    const nextIndex = index + gridColumns;
-                    if (nextIndex >= gridItems) return prev; // Prevent moving down beyond the last row
-                    return { type: 'grid', index: nextIndex };
-                }
-            }
-
-            return prev;
-        });
-    };
-
-    useEffect(() => {
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [content]);
-
-    useEffect(() => {
-        // Update content and ensure sidebar and grid content match
-        if (selected.type === 'sidebar') {
-            if (selected.index === 0 && content !== movies) setContent(movies);
-            if (selected.index === 1 && content !== series) setContent(series);
-        }
-    }, [content, selected]);
-
-    const isSelected = (type: string, idx: number) => selected.type === type && selected.index === idx;
+    const {
+        content,
+        is_video_popup_open,
+        set_video_popup_open,
+        get_random_youtube_video,
+        is_selected,
+        set_selected,
+        sidebar_menus,
+        logo
+    } = useContainer()
 
     return (
         <div className={'bg-gradient-to-r from-[#000000] to-[#3E003B] w-full h-full flex'}>
@@ -64,14 +27,14 @@ export default function TestingLayout() {
                         className={clsx(
                             'px-2 cursor-pointer w-full flex justify-center items-center h-6',
                             {
-                                'border-r-4 border-[#FF3988]': isSelected('sidebar', idx),
-                                'text-white': !isSelected('sidebar', idx),
+                                'border-r-4 border-[#FF3988]': is_selected('sidebar', idx) || content?.id === sidebar_menu?.id,
+                                'text-white': !is_selected('sidebar', idx),
                             }
                         )}
-                        onClick={() => setSelected({ type: 'sidebar', index: idx })} // Handle click for sidebar
+                        onClick={() => set_selected({ type: 'sidebar', index: idx })} // Handle click for sidebar
                     >
                         <img
-                            src={isSelected('sidebar', idx) ? sidebar_menu.activeIcon : sidebar_menu.icon}
+                            src={(is_selected('sidebar', idx) || content?.id === sidebar_menu?.id) ? sidebar_menu.activeIcon : sidebar_menu.icon}
                             alt={sidebar_menu.id}
                         />
                     </div>
@@ -86,33 +49,43 @@ export default function TestingLayout() {
                     </div>
                 </div>
                 <div className={'flex flex-col gap-3 flex-1 w-full h-full'}>
-                    <div className={'text-left text-white text-2xl'}>{selected.index === 0 ? 'Movies' : 'Series'}</div>
+                    <div className={'text-left text-white text-2xl'}>{content?.title}</div>
                     {/* Grid Content */}
                     <div className={'flex-1 h-full w-full'}>
                         <div className="flex-1 grid grid-cols-4 gap-3">
-                            {content.map((item, idx) => (
+                            {content?.data && content?.data?.map((item, idx) => (
                                 <div
                                     key={idx}
-                                    className={`flex flex-col p-4 rounded border ${
-                                        isSelected('grid', idx) ? 'bg-gray-600' : 'bg-gray-800'
-                                    }`}
+                                    className={clsx(
+                                        'flex flex-col rounded-xl overflow-hidden',
+                                        {
+                                            'border-4 border-red-500': is_selected('grid', idx)
+                                        }
+                                    )}
                                 >
                                     <img
-                                        src={item.thumbnail}
+                                        src={'https://picsum.photos/200/300?random=' + item.releaseYear + idx}
                                         alt={item.title}
-                                        className="h-32 object-cover rounded-t-md"
+                                        className={"h-48 object-cover rounded-md"}
                                     />
-                                    <div className="p-2">
-                                        <h2 className="text-lg font-semibold text-white">{item.title}</h2>
-                                        <p className="text-sm text-gray-300">{item.description}</p>
-                                        <span className="text-xs text-gray-400">{`Release Year: ${item.releaseYear}`}</span>
-                                    </div>
+                                    {/*<div className="p-2">*/}
+                                    {/*    <h2 className="text-lg font-semibold text-white">{item.title}</h2>*/}
+                                    {/*    <p className="text-sm text-gray-300">{item.description}</p>*/}
+                                    {/*    <span className="text-xs text-gray-400">{`Release Year: ${item.releaseYear}`}</span>*/}
+                                    {/*</div>*/}
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
             </div>
+            {
+                is_video_popup_open &&
+                <CustomVideoPlayer
+                    videoUrl={get_random_youtube_video()}
+                    onClose={() => set_video_popup_open(false)}
+                />
+            }
         </div>
     );
 }

@@ -7,6 +7,19 @@ import tvIconActive from './active_tv_icon.svg'
 
 import logo from './toffee_logo.svg'
 
+type TData = {
+    title: string
+    description: string
+    releaseYear: number
+    thumbnail: string
+}
+
+type TContent = {
+    id: 'movies' | 'series'
+    title: string
+    data: TData[]
+}
+
 const sidebar_menus = [
     {
         id: 'movies',
@@ -25,7 +38,7 @@ const sidebar_menus = [
     },
 ]
 
-const movies = [
+const movies: TData[] = [
     {
         title      : 'Inception',
         description: 'A mind-bending thriller by Christopher Nolan.',
@@ -53,7 +66,7 @@ const movies = [
     })),
 ]
 
-const series = [
+const series: TData[] = [
     {
         title      : 'Breaking Bad',
         description: 'A teacher turns drug lord.',
@@ -81,4 +94,17 @@ const series = [
     })),
 ]
 
-export { sidebar_menus, logo, movies, series }
+const menuwise_response: TContent[] = [
+    {
+        id: 'movies',
+        title: 'Movies',
+        data: movies
+    },
+    {
+        id: 'series',
+        title: 'Series',
+        data: series
+    }
+]
+
+export { sidebar_menus, logo, movies, series, menuwise_response }
