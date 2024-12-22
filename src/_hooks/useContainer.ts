@@ -61,7 +61,7 @@ export default function useContainer() {
         if(selected.type === 'grid' && event.key === 'Escape') {
             set_video_popup_open(false)
         }
-    }, [])
+    }, [is_video_popup_open, selected?.type])
 
     useEffect(() => {
         window.addEventListener('keydown', handleKeyDown);
